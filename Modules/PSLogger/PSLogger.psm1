@@ -40,7 +40,7 @@ class PSLogger {
         .SYNOPSIS
             共通のログ出力メソッド
         #>
-        $timestamp = [DateTime]::Now.ToString("yyyy/MM/dd ")
+        $timestamp = [DateTime]::Now.ToString("yyyy/MM/dd HH:mm:ss.fff ")
         Write-Host "$timestamp [$level] $message"
     }
 
