@@ -17,8 +17,8 @@ class PSLogger {
     .SYNOPSIS
         ログ出力クラス
     #>
-    static [PSLogLevel] $LogLevel = [PSLogLevel]
     static [PSLogger] $Logger
+    [PSLogLevel] $LogLevel
 
     static [PSLogger] GetLogger() {
         <#
@@ -32,7 +32,7 @@ class PSLogger {
     }
 
     PSLogger() {
-        [PSLogger]::LogLevel = [PSLogLevel]::Info
+        $this.LogLevel = [PSLogLevel]::Info
     }
 
     WriteMessage([String] $level, [String] $message) {
@@ -40,7 +40,7 @@ class PSLogger {
         .SYNOPSIS
             共通のログ出力メソッド
         #>
-        $timestamp = [DateTime]::Now.ToString("yyyy/MM/dd ")
+        $timestamp = [DateTime]::Now.ToString("yyyy/MM/dd HH:mm:ss.fff ")
         Write-Host "$timestamp [$level] $message"
     }
 
@@ -49,7 +49,7 @@ class PSLogger {
         .SYNOPSIS
             デバッグログの出力を行う
         #>
-        if ( [PSLogger]::LogLevel -gt [PSLogLevel]::Debug ) { return }
+        if ( $this.LogLevel -gt [PSLogLevel]::Debug ) { return }
         $this.WriteMessage("DEBUG", $message)
     }
 
@@ -58,7 +58,7 @@ class PSLogger {
         .SYNOPSIS
             詳細ログの出力を行う
         #>
-        if ( [PSLogger]::LogLevel -gt [PSLogLevel]::Detail ) { return }
+        if ( $this.LogLevel -gt [PSLogLevel]::Detail ) { return }
         $this.WriteMessage("DETAIL", $message)
     }
 
@@ -67,7 +67,7 @@ class PSLogger {
         .SYNOPSIS
             情報ログの出力を行う
         #>
-        if ( [PSLogger]::LogLevel -gt [PSLogLevel]::Info ) { return }
+        if ( $this.LogLevel -gt [PSLogLevel]::Info ) { return }
         $this.WriteMessage("INFO", $message)
     }
 
@@ -76,7 +76,7 @@ class PSLogger {
         .SYNOPSIS
             警告ログの出力を行う
         #>
-        if ( [PSLogger]::LogLevel -gt [PSLogLevel]::Warning) { return }
+        if ( $this.LogLevel -gt [PSLogLevel]::Warning) { return }
         $this.WriteMessage("WARN", $message)
     }
 
@@ -85,7 +85,7 @@ class PSLogger {
         .SYNOPSIS
             エラーログの出力を行う
         #>
-        if ( [PSLogger]::LogLevel -gt [PSLogLevel]::Error ) { return }
+        if ( $this.LogLevel -gt [PSLogLevel]::Error ) { return }
         $this.WriteMessage("ERROR", $message)
     }
 }
