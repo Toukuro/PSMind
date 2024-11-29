@@ -4,13 +4,15 @@ using module ".\PSForm.psm1"
 
 # テストの実行方法：
 #  Invoke-Pester -Path .\PSFormTest.ps1
+# VSCodeでは事前に以下のコマンドを実行する必要あり
+#　Add-Type -AssemblyName System.Windows.Forms
 Describe "PSFormのテスト" {
     class TestForm : PSForm {
         TestForm() : base($null) {
         }
 
         InitializeComponent() {
-            [PSLogger]::LogLevel = [PSLogLevel]::Debug
+            $this.Logger.LogLevel = [PSLogLevel]::Debug
 
             $this.Form.Width = 400
             $this.Form.Height = 400
@@ -27,7 +29,7 @@ Describe "PSFormのテスト" {
             $this.Form.Controls.Add($button)
         }
 
-        Button_Click([Object] $sender, [EventHandler] $e) {
+        Button_Click([Object] $sender, [EventArgs] $e) {
             [MessageBox]::Show("Button Clicked!")
         }
     }
