@@ -21,25 +21,32 @@ class PSMindForm : PSForm {
         $this.Form.Text = "PSMind"
 
         # ファイルメニュー
-        $fileMenu = [MenuItem]::new('ファイル')
-
-        $this.FileMenuOpen = [MenuItem]::new('開く')
-        $this.AddClick($this.FileMenuOpen, "FileMenuOpen_Click")
-        $fileMenu.MenuItems.Add($this.FileMenuOpen)
-
-        $this.FileMenuSave = [MenuItem]::new('保存')
-        $this.AddClick($this.FileMenuSave, "FileMenuSave_Click")
-        $fileMenu.MenuItems.Add($this.FileMenuSave)
-        
-        $this.FileMenuExit = [MenuItem]::new('終了')
-        $this.AddClick($this.FileMenuExit, "FileMenuExit_Click")
-        $fileMenu.MenuItems.Add($this.FileMenuExit)
         
         $menu = [MainMenu]::new()
-        $menu.MenuItems.Add($fileMenu)
+        $this._AddFileMenu($menu)
         $this.Form.Menu = $menu
         
         $this.Form.Activate()
+    }
+
+    _AddFileMenu([MainMenu] $mainMenu) {
+        $fileMenu = [MenuItem]::new('ファイル')
+
+        $this.FileMenuOpen = [MenuItem]::new('開く')
+        $this._AddMenuItem($fileMenu, $this.FileMenuOpen, "FileMenuOpen_Click")
+
+        $this.FileMenuSave = [MenuItem]::new('保存')
+        $this._AddMenuItem($fileMenu, $this.FileMenuSave, "FileMenuSave_Click")
+        
+        $this.FileMenuExit = [MenuItem]::new('終了')
+        $this._AddMenuItem($fileMenu, $this.FileMenuExit, "FileMenuExit_Click")
+
+        $mainMenu.MenuItems.Add($fileMenu)
+    }
+
+    _AddMenuItem([MenuItem] $parentMenuItem, [MenuItem] $menuItem, [String] $handlerName) {
+        $this.AddClick($menuItem, $handlerName)
+        $parentMenuItem.Add($menuItem)
     }
 
     FileMenuOpen_Click([Object] $sender, [EventArgs] $e) {
