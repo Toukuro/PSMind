@@ -3,6 +3,7 @@ using namespace System.Windows.Forms
 using namespace System.Drawing
 
 using module PSForm
+using module "..\Models\PSMindModel.psm1"
 
 class PSMindForm : PSForm {
     [MenuItem] $FileMenuOpen
@@ -21,11 +22,11 @@ class PSMindForm : PSForm {
         $this.Form.Text = "PSMind"
 
         # ファイルメニュー
-        
+
         $menu = [MainMenu]::new()
         $this._AddFileMenu($menu)
         $this.Form.Menu = $menu
-        
+
         $this.Form.Activate()
     }
 
@@ -37,7 +38,7 @@ class PSMindForm : PSForm {
 
         $this.FileMenuSave = [MenuItem]::new('保存')
         $this._AddMenuItem($fileMenu, $this.FileMenuSave, "FileMenuSave_Click")
-        
+
         $this.FileMenuExit = [MenuItem]::new('終了')
         $this._AddMenuItem($fileMenu, $this.FileMenuExit, "FileMenuExit_Click")
 
@@ -46,18 +47,30 @@ class PSMindForm : PSForm {
 
     _AddMenuItem([MenuItem] $parentMenuItem, [MenuItem] $menuItem, [String] $handlerName) {
         $this.AddClick($menuItem, $handlerName)
-        $parentMenuItem.Add($menuItem)
+        $parentMenuItem.MenuItems.Add($menuItem)
+    }
+
+    [PSMindModel] _GetModel() {
+        # ダウンキャストを使用：PowerShell単体ではジェネリック型を定義できないため
+        return $this.Model
     }
 
     FileMenuOpen_Click([Object] $sender, [EventArgs] $e) {
         $this.Logger.WriteDebug("PSMindForm.FileMenuOpen_Click: occured.")
+        $model = $this._GetModel()
+        if ( $null -eq $model ) { return }
+        $model.ReadMap()
     }
 
     FileMenuSave_Click([Object] $sender, [EventArgs] $e) {
         $this.Logger.WriteDebug("PSMindForm.FileMenuSave_Click: occured.")
+        $model = $this._GetModel()
+        if ( $null -eq $model ) { return }
+        $model.WriteMap()
     }
 
     FileMenuExit_Click([Object] $sender, [EventArgs] $e) {
         $this.Logger.WriteDebug("PSMindForm.FileMenuExit_Click: occured.")
+        $this.Form.Close()
     }
 }
