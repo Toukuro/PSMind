@@ -1,1 +1,1 @@
-MindMap Application of PowerShell
+MindMap Application by PowerShell
