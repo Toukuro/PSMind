@@ -13,6 +13,9 @@ Describe "XmlSerializerによるシリアライズ" {
     }
 
     It "AIに聞いた方法そのまま" {
+        $true | Should -Be $true
+        Write-Host ".NET Framework, .NET Coreのインストールが必要なため、却下"
+        <#
         $source =
 @"
     using System;
@@ -44,6 +47,7 @@ Describe "XmlSerializerによるシリアライズ" {
 
         # シリアライズされたXMLを取得
         Write-host $stream.ToString()
+        #>
     }
 
 <#
