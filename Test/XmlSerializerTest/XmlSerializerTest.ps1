@@ -1,6 +1,7 @@
 using namespace System.Xml
 using namespace System.Xml.Serialization
 using namespace System.IO
+using namespace System.Text
 using module "..\..\Models\NodeBase.psm1"
 using module "..\..\Models\Node.psm1"
 using module "..\..\Models\Map.psm1"
@@ -14,9 +15,9 @@ Describe "XmlSerializerによるシリアライズ" {
     }
 
     AfterAll {
-        Remove-Module Map
-        Remove-Module Node
-        Remove-Module NodeBase
+        #Remove-Module Map
+        #Remove-Module Node
+        #Remove-Module NodeBase
     }
 
     It "AIに聞いた方法そのまま" {
@@ -59,20 +60,25 @@ Describe "XmlSerializerによるシリアライズ" {
 
     Context "Visitorパターンによる実装" {
         class XmlWriteVisitor : NodeVisitor {
-            [XmlWriter] $xmlWriter
+            [XmlTextWriter] $xmlWriter
+            [String] $AppVersion
 
-            XmlWriteVisitor([String] $fileName) {
-                [XmlWriterSettings] $setting = [XmlWriterSettings]::new()
-                [StreamWriter] $sw = [StreamWriter]::new($fileName)
-                $this.xmlWriter = [XmlWriter]::Create($sw, $setting)
+            XmlWriteVisitor([String] $fileName, [String] $appVersion) {
+                $this.AppVersion = $appVersion
+                $this.xmlWriter = [XmlTextWriter]::new($fileName, [Encoding]::UTF8)
+                $this.xmlWriter.Formatting = [Formatting]::Indented
+                #[XmlWriterSettings] $settings = $this.xmlWriter.Settings
+                # $settings.OmitXmlDeclaration = $true
+                # $settings.NewLineChars = "\n\r"
             }
 
-            [void] Dispose() {
+            Close() {
                 $this.xmlWriter.close()
             }
 
             Visit([Map] $map) {
                 $this.xmlWriter.WriteStartElement("map")
+                $this.xmlWriter.WriteAttributeString("version", "PSMind " + $this.AppVersion)
                 $map.TopNode.Accept($this)
                 $this.xmlWriter.WriteEndElement()
             }
@@ -88,9 +94,11 @@ Describe "XmlSerializerによるシリアライズ" {
         }
 
         It "XML出力" {
-            $fileName = Join-Path $outputPath "test1.xml"
-            $visitor = [XmlWriteVisitor]::new($fileName)
+            $fileName = Join-Path $outputPath "Map2.xml"
+            $appVersion = "0.1"
+            $visitor = [XmlWriteVisitor]::new($fileName, $appVersion)
             $map.Accept($visitor)
+            $visitor.Close()
         }
     }
 
