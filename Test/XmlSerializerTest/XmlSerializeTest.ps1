@@ -6,7 +6,7 @@ using module "..\..\Models\NodeBase.psm1"
 using module "..\..\Models\Node.psm1"
 using module "..\..\Models\Map.psm1"
 
-Describe "XmlSerializerによるシリアライズ" {
+Describe "Xmlでシリアライズする方法の確認" {
     BeforeAll {
         $map = [Map]::new()
         $map.TopNode.Children.Add([Node]::new("１階層目", $map.TopNode))
@@ -20,11 +20,12 @@ Describe "XmlSerializerによるシリアライズ" {
         #Remove-Module NodeBase
     }
 
-    It "AIに聞いた方法そのまま" {
-        $true | Should -Be $true
-        Write-Host ".NET Framework, .NET Coreのインストールが必要なため、却下"
-        <#
-        $source =
+    Context "System.Xml.XmlSerializerを使う方法" {
+        It "AIに聞いた方法そのまま" {
+            $true | Should -Be $true
+            Write-Host ".NET Framework, .NET Coreのインストールが必要なため、却下"
+            <#
+            $source =
 @"
     using System;
     using System.Xml;
@@ -41,21 +42,22 @@ Describe "XmlSerializerによるシリアライズ" {
     }
 "@
 
-        Add-Type -TypeDefinition $source -Language CSharp
+            Add-Type -TypeDefinition $source -Language CSharp
 
-        # Personクラスのインスタンスを作成
-        $person = New-Object Person
-        $person.Name = "John Doe"
-        $person.Age = 30
+            # Personクラスのインスタンスを作成
+            $person = New-Object Person
+            $person.Name = "John Doe"
+            $person.Age = 30
 
-        # XmlSerializerを使用してオブジェクトをXMLにシリアライズ
-        $serializer = New-Object System.Xml.Serialization.XmlSerializer([Person])
-        $stream = [System.IO.StringWriter]::new()
-        $serializer.Serialize($stream, $person)
+            # XmlSerializerを使用してオブジェクトをXMLにシリアライズ
+            $serializer = New-Object System.Xml.Serialization.XmlSerializer([Person])
+            $stream = [System.IO.StringWriter]::new()
+            $serializer.Serialize($stream, $person)
 
-        # シリアライズされたXMLを取得
-        Write-host $stream.ToString()
-        #>
+            # シリアライズされたXMLを取得
+            Write-host $stream.ToString()
+            #>
+        }
     }
 
     Context "Visitorパターンによる実装" {
