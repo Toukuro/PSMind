@@ -2,6 +2,8 @@ using namespace System.Xml
 using namespace System.Xml.Serialization
 using namespace System.IO
 using namespace System.Text
+using module PSLogger
+
 using module "..\..\Models\NodeBase.psm1"
 using module "..\..\Models\Node.psm1"
 using module "..\..\Models\Map.psm1"
@@ -101,6 +103,156 @@ Describe "Xmlでシリアライズする方法の確認" {
             $visitor = [XmlWriteVisitor]::new($fileName, $appVersion)
             $map.Accept($visitor)
             $visitor.Close()
+        }
+    }
+
+    Context "XmlTextReaderとBuilderパターンで読込む方法の確認" {
+        It "XmlTextReaderの動作確認" {
+            $fileName = Join-Path $outputPath "Map2.xml"
+            $xmlReader = [XmlTextReader]::new($fileName)
+            while ($xmlReader.Read()) {
+                switch ($xmlReader.NodeType) {
+                    ([XmlNodeType]::Element) {
+                        Write-Host "Element:" $xmlReader.Name ", isEmptyElement:" $xmlReader.IsEmptyElement
+                        while ($xmlReader.MoveToNextAttribute()) {
+                            if ($xmlReader.NodeType -eq [XmlNodeType]::Attribute) {
+                                Write-Host "  Attribute:" $xmlReader.Name ", Value:" $xmlReader.Value
+                            }
+                        }
+                    }
+                    ([XmlNodeType]::EndElement) {
+                        Write-Host "EndElement:" $xmlReader.Name
+                    }
+                }
+            }
+            $xmlReader.Close()
+        }
+
+        class MapBuilder {
+            [Map] $Map = $null
+            [Node] $CurrentNode = $null
+            [PSLogger] $Logger
+
+            MapBuilder() {
+                $this.Logger = [PSLogger]::new()
+                $this.Logger.LogLevel = [PSLogLevel]::Debug
+            }
+            [void] CreateMap([String] $version) {
+                $this.Logger.WriteDebug("CreateMap: occured")
+                $this.Map = [Map]::new()
+                $this.Map.TopNode = $null
+            }
+
+            [void] CreateNode([String] $text) {
+                $this.Logger.WriteDebug("CreateNode: occured")
+                if ($null -eq $this.CurrentNode) {
+                    $this.Logger.WriteDebug("CreateNode: 1st Node Created.")
+                    $newNode = [Node]::new($text)
+                }
+                else {
+                    $this.Logger.WriteDebug("CreateNode: Node Created.")
+                    $newNode = [Node]::new($text, $this.CurrentNode.Parent)
+                    if ($null -ne $this.CurrentNode.Parent) {
+                        $this.CurrentNode.Parent.Children.Add($newNode)
+                    }
+                }
+                $this.CurrentNode = $newNode
+                if ($null -eq $this.Map.TopNode) {
+                    $this.Logger.WriteDebug("CreateNode: Set TopNode")
+                    $this.Map.TopNode = $this.CurrentNode
+                }
+            }
+
+            [void]CreateChildNode([String] $text) {
+                $this.Logger.WriteDebug("CreateChildNode: occured")
+                if ($null -eq $this.CurrentNode) {
+                    $this.Logger.WriteDebug("CreateChildNode: CurrentNode is NUL")
+                    return
+                }
+                $newNode = [Node]::new($text, $this.CurrentNode)
+                $this.CurrentNode.Children.Add($newNode)
+                $this.CurrentNode = $newNode
+            }
+
+            [void]MoveParent() {
+                $this.Logger.WriteDebug("MoveParent: occured")
+                if ($null -ne $this.CurrentNode.Parent) {
+                    $this.Logger.WriteDebug("MoveParent: Move to Parent")
+                    $this.CurrentNode = $this.CurrentNode.Parent
+                }
+            }
+        }
+
+        class NodeDirector {
+            [MapBuilder] $builder
+
+            NodeDirector([MapBuilder] $builder) {
+                $this.builder = $builder
+            }
+
+            [Map] Construct($fileName) {
+                [XmlTextReader] $xmlReader = [XmlTextReader]::new($fileName)
+                [bool] $isEmptyElement = $true
+                [bool] $isEmptyPrevElement = $true
+
+                while ($xmlReader.Read()) {
+                    switch ($xmlReader.NodeType) {
+                        ([XmlNodeType]::Element) {
+                            switch ($xmlReader.Name) {
+                                ("map") {
+                                    [String] $version = [String]::Empty
+                                    while ($xmlReader.MoveToNextAttribute()) {
+                                        if ($xmlReader.NodeType -eq [XmlNodeType]::Attribute) {
+                                            if ("version" -eq $xmlReader.Name) {
+                                                $version = $xmlReader.Value
+                                            }
+                                        }
+                                    }
+                                    $this.builder.CreateMap($version)
+                                }
+                                ("node") {
+                                    $isEmptyPrevElement = $isEmptyElement
+                                    $isEmptyElement = $xmlReader.IsEmptyElement
+                                    Write-Host "isEmptyPrevElement: $isEmptyPrevElement , isEmptyElement: $isEmptyElement"
+                                    [String] $text = [String]::Empty
+                                    while ($xmlReader.MoveToNextAttribute()) {
+                                        if ($xmlReader.NodeType -eq [XmlNodeType]::Attribute) {
+                                            if ("TEXT" -eq $xmlReader.Name) {
+                                                $text = $xmlReader.Value
+                                            }
+                                        }
+                                    }
+                                    if ($true -eq $isEmptyPrevElement) {
+                                        # 1つ前のnodeがEmptyなら、兄弟のnodeにする
+                                        $this.builder.CreateNode($text)
+                                    } else {
+                                        # １つ前のnodeがEmptyでなければ、子供のnodeにする
+                                        $this.builder.CreateChildNode($text)
+                                    }
+                                }
+                            }
+                        }
+                        ([XmlNodeType]::EndElement) {
+                            if ("node" -eq $xmlReader.Name) {
+                                $this.builder.MoveParent()
+                            }
+                        }
+                    }
+                }
+                $xmlReader.Close()
+                return $this.builder.Map
+            }
+        }
+        It "BulderパターンによるXML読込の確認" {
+            $fileName = Join-Path $outputPath "Map2.xml"
+            $builder = [MapBuilder]::new()
+            $director = [NodeDirector]::new($builder)
+            [Map] $map = $director.Construct($fileName)
+
+            $map.TopNode | Should -Not -BeNullOrEmpty
+            $map.TopNode.Text | Should -Be "新規マインドマップ"
+            $map.TopNode.Children.Count | Should -Be 1
+            $map.TopNode.Children[0].Text | Should -Be "１階層目"
         }
     }
 
