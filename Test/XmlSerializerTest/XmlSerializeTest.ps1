@@ -200,34 +200,20 @@ Describe "Xmlでシリアライズする方法の確認" {
                         ([XmlNodeType]::Element) {
                             switch ($xmlReader.Name) {
                                 ("map") {
-                                    [String] $version = [String]::Empty
-                                    while ($xmlReader.MoveToNextAttribute()) {
-                                        if ($xmlReader.NodeType -eq [XmlNodeType]::Attribute) {
-                                            if ("version" -eq $xmlReader.Name) {
-                                                $version = $xmlReader.Value
-                                            }
-                                        }
-                                    }
-                                    $this.builder.CreateMap($version)
+                                    [Hashtable] $attributes = $this.ReadAttributes($xmlReader)
+                                    $this.builder.CreateMap($attributes['version'])
                                 }
                                 ("node") {
                                     $isEmptyPrevElement = $isEmptyElement
                                     $isEmptyElement = $xmlReader.IsEmptyElement
                                     Write-Host "isEmptyPrevElement: $isEmptyPrevElement , isEmptyElement: $isEmptyElement"
-                                    [String] $text = [String]::Empty
-                                    while ($xmlReader.MoveToNextAttribute()) {
-                                        if ($xmlReader.NodeType -eq [XmlNodeType]::Attribute) {
-                                            if ("TEXT" -eq $xmlReader.Name) {
-                                                $text = $xmlReader.Value
-                                            }
-                                        }
-                                    }
+                                    [Hashtable] $attributes = $this.ReadAttributes($xmlReader)
                                     if ($true -eq $isEmptyPrevElement) {
                                         # 1つ前のnodeがEmptyなら、兄弟のnodeにする
-                                        $this.builder.CreateNode($text)
+                                        $this.builder.CreateNode($attributes['TEXT'])
                                     } else {
                                         # １つ前のnodeがEmptyでなければ、子供のnodeにする
-                                        $this.builder.CreateChildNode($text)
+                                        $this.builder.CreateChildNode($attributes['TEXT'])
                                     }
                                 }
                             }
@@ -241,6 +227,16 @@ Describe "Xmlでシリアライズする方法の確認" {
                 }
                 $xmlReader.Close()
                 return $this.builder.Map
+            }
+
+            [Hashtable] ReadAttributes([XmlTextReader] $reader) {
+                [Hashtable] $attributes = [Hashtable]::new()
+                while ($reader.MoveToNextAttribute()) {
+                    if ($reader.NodeType -eq [XmlNodeType]::Attribute) {
+                        $attributes.Add($reader.Name, $reader.Value)
+                    }
+                }
+                return $attributes
             }
         }
         It "BulderパターンによるXML読込の確認" {
