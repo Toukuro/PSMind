@@ -207,14 +207,7 @@ Describe "Xmlでシリアライズする方法の確認" {
                                     $isEmptyPrevElement = $isEmptyElement
                                     $isEmptyElement = $xmlReader.IsEmptyElement
                                     Write-Host "isEmptyPrevElement: $isEmptyPrevElement , isEmptyElement: $isEmptyElement"
-                                    [Hashtable] $attributes = $this.ReadAttributes($xmlReader)
-                                    if ($true -eq $isEmptyPrevElement) {
-                                        # 1つ前のnodeがEmptyなら、兄弟のnodeにする
-                                        $this.builder.CreateNode($attributes['TEXT'])
-                                    } else {
-                                        # １つ前のnodeがEmptyでなければ、子供のnodeにする
-                                        $this.builder.CreateChildNode($attributes['TEXT'])
-                                    }
+                                    $this.InstructToCreateNode($xmlReader, !$isEmptyPrevElement)
                                 }
                             }
                         }
@@ -227,6 +220,15 @@ Describe "Xmlでシリアライズする方法の確認" {
                 }
                 $xmlReader.Close()
                 return $this.builder.Map
+            }
+
+            InstructToCreateNode([XmlTextReader] $reader, [bool] $asChildElement) {
+                [Hashtable] $attributes = $this.ReadAttributes($reader)
+                if ($true -eq $asChildElement) {
+                    $this.builder.CreateChildNode($attributes['TEXT'])
+                } else {
+                    $this.builder.CreateNode($attributes['TEXT'])
+                }
             }
 
             [Hashtable] ReadAttributes([XmlTextReader] $reader) {
