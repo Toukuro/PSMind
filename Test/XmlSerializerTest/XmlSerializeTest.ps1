@@ -1,3 +1,4 @@
+using namespace System.Collections.Generic
 using namespace System.Xml
 using namespace System.Xml.Serialization
 using namespace System.IO
@@ -180,6 +181,28 @@ Describe "Xmlでシリアライズする方法の確認" {
                     $this.Logger.WriteDebug("MoveParent: Move to Parent")
                     $this.CurrentNode = $this.CurrentNode.Parent
                 }
+            }
+        }
+
+        class DelayedFlag {
+            [Queue[bool]] $FlagQueue
+
+            DelayedFlag([int] $depth, [bool] $initValue) {
+                $this.FlagQueue = [Queue[bool]]::new($depth)
+                for ($i = 0; $i -lt $depth; $i++) {
+                    $this.FlagQueue.Enqueue($initValue)
+                }
+            }
+
+            [void] Set([bool] $value) {
+                if ( $this.FlagQueue.Count -ge 2 ) {
+                    $this.FlagQueue.Dequeue()
+                }
+                $this.FlagQueue.Enqueue($value)
+            }
+
+            [bool] Get() {
+                return $this.FlagQueue.Peek()
             }
         }
 
