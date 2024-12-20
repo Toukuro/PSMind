@@ -215,8 +215,7 @@ Describe "Xmlでシリアライズする方法の確認" {
 
             [Map] Construct($fileName) {
                 [XmlTextReader] $xmlReader = [XmlTextReader]::new($fileName)
-                [bool] $isEmptyElement = $true
-                [bool] $isEmptyPrevElement = $true
+                [DelayedFlag] $isEmptyPrevElement = [DelayedFlag]::new(2, $true)
 
                 while ($xmlReader.Read()) {
                     switch ($xmlReader.NodeType) {
@@ -227,10 +226,9 @@ Describe "Xmlでシリアライズする方法の確認" {
                                     $this.builder.CreateMap($attributes['version'])
                                 }
                                 ("node") {
-                                    $isEmptyPrevElement = $isEmptyElement
-                                    $isEmptyElement = $xmlReader.IsEmptyElement
-                                    Write-Host "isEmptyPrevElement: $isEmptyPrevElement , isEmptyElement: $isEmptyElement"
-                                    $this.InstructToCreateNode($xmlReader, !$isEmptyPrevElement)
+                                    $isEmptyPrevElement.Set($xmlReader.IsEmptyElement)
+                                    Write-Host "isEmptyPrevElement:" $isEmptyPrevElement.Get()
+                                    $this.InstructToCreateNode($xmlReader, !$isEmptyPrevElement.Get())
                                 }
                             }
                         }
