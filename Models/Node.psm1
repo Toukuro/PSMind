@@ -1,19 +1,15 @@
 using namespace System.Collections.Generic
+using module ".\NodeBase.psm1"
 
-class Node {
-    [Node] $Parent
-    [List[Node]] $Children
+class Node : NodeBase {
     [String] $Text
 
-    Node([String] $text, [Node] $parent) {
+    Node([String] $text, [Node] $parent) : base() {
         $this.Text = $text
         $this.Parent = $parent
-        $this.Children = [List[Node]]::new()
     }
 
-    Node([String] $text) {
+    Node([String] $text) : base() {
         $this.Text = $text
-        $this.Parent = $null
-        $this.Children = [List[Node]]::new()
     }
 }
