@@ -220,17 +220,7 @@ Describe "Xmlでシリアライズする方法の確認" {
                 while ($xmlReader.Read()) {
                     switch ($xmlReader.NodeType) {
                         ([XmlNodeType]::Element) {
-                            switch ($xmlReader.Name) {
-                                ("map") {
-                                    [Hashtable] $attributes = $this.ReadAttributes($xmlReader)
-                                    $this.builder.CreateMap($attributes['version'])
-                                }
-                                ("node") {
-                                    $isEmptyPrevElement.Set($xmlReader.IsEmptyElement)
-                                    Write-Host "isEmptyPrevElement:" $isEmptyPrevElement.Get()
-                                    $this.InstructToCreateNode($xmlReader, !$isEmptyPrevElement.Get())
-                                }
-                            }
+                            $this.InstructToCreateMapAndNode($xmlReader, $isEmptyPrevElement)
                         }
                         ([XmlNodeType]::EndElement) {
                             if ("node" -eq $xmlReader.Name) {
@@ -241,6 +231,20 @@ Describe "Xmlでシリアライズする方法の確認" {
                 }
                 $xmlReader.Close()
                 return $this.builder.Map
+            }
+
+            InstructToCreateMapAndNode([XmlTextReader] $reader, [DelayedFlag] $isEmptyPrevElement) {
+                switch ($reader.Name) {
+                    ("map") {
+                        [Hashtable] $attributes = $this.ReadAttributes($reader)
+                        $this.builder.CreateMap($attributes['version'])
+                    }
+                    ("node") {
+                        $isEmptyPrevElement.Set($reader.IsEmptyElement)
+                        Write-Host "isEmptyPrevElement:" $isEmptyPrevElement.Get()
+                        $this.InstructToCreateNode($reader, !$isEmptyPrevElement.Get())
+                    }
+                }
             }
 
             InstructToCreateNode([XmlTextReader] $reader, [bool] $asChildElement) {
