@@ -2,24 +2,32 @@ using namespace System.Collections.Generic
 using module PSLogger
 
 class NodeBase {
+    <#
+    .SYNOPSIS
+        ノードの基底クラス
+    #>
     [NodeBase] $Parent
     [List[NodeBase]] $Children
-    [PSLogger] $logger
+    [PSLogger] $Logger
 
     NodeBase() {
-        $this.logger = [PSLogger]::GetLogger()
+        $this.Logger = [PSLogger]::GetLogger()
         $this.Parent = $null
         $this.Children = [List[NodeBase]]::new()
     }
 
     Accept([NodeVisitor] $visitor) {
-        $this.logger.WriteDebug("NodeBase.Accept: occured.")
+        $this.Logger.WriteDebug("NodeBase.Accept: occured.")
         $visitor.Visit($this)
     }
 }
 
 class NodeVisitor {
+    <#
+    .SYNOPSIS
+        ノードの訪問者クラス
+    #>
     Visit([NodeBase] $node) {
-        $this.logger.WriteDebug("NodeVisitor.Visit: occured.")
+        $this.Logger.WriteDebug("NodeVisitor.Visit: occured.")
     }
 }
