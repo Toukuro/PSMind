@@ -22,25 +22,30 @@ class MapBuilder {
     [void] CreateNode([String] $text) {
         $this.Logger.WriteDebug("CreateNode: occured")
 
-        if ($null -eq $this.Map) {
-            throw [MapNodeException]::new("Map is NUL")
+        if ($null -eq $this.CurrentNode) {
+            $this.CurrentNode = $this.Map.TopNode
         }
+        $this.CheckMapAndCurrentNodeParentForValid()
+
         if ($null -eq $this.CurrentNode) {
             $this.Logger.WriteDebug("CreateNode: 1st Node Created.")
-            $newNode = [Node]::new($text)
+            $this.CurrentNode = [Node]::new($text)
+            $this.Map.TopNode = $this.CurrentNode
         }
         else {
             $this.Logger.WriteDebug("CreateNode: Node Created.")
             $newNode = [Node]::new($text, $this.CurrentNode.Parent)
-            if ($null -eq $this.CurrentNode.Parent) {
-                throw [MapNodeException]::new("Parent Node is NUL")
-            }
             $this.CurrentNode.Parent.Children.Add($newNode)
+            $this.CurrentNode = $newNode
         }
-        $this.CurrentNode = $newNode
-        if ($null -eq $this.Map.TopNode) {
-            $this.Logger.WriteDebug("CreateNode: Set TopNode")
-            $this.Map.TopNode = $this.CurrentNode
+    }
+
+    hidden [void] CheckMapAndCurrentNodeParentForValid() {
+        if ($null -eq $this.Map) {
+            throw [MapNodeException]::new("Map is NUL")
+        }
+        if (($null -ne $this.CurrentNode) -and ($null -eq $this.CurrentNode.Parent)) {
+            throw [MapNodeException]::new("CurrentNode.Parent is NUL")
         }
     }
 

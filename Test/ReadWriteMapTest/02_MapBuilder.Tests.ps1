@@ -67,7 +67,7 @@ Describe "MapBuilderのテスト" {
         It "TopNodeと同レベルのNode作成はエラー" {
             $mapBuilder.CreateMap("0.1")
             $mapBuilder.CreateNode("最初のノード")
-            { $mapBuilder.CreateNode("2番目のノード") } | Should -Throw "Parent Node is NUL"
+            { $mapBuilder.CreateNode("2番目のノード") } | Should -Throw "CurrentNode.Parent is NUL"
         }
     }
 }
